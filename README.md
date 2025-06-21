@@ -28,3 +28,5 @@ A simple web app built with Streamlit to merge multiple files (TXT, PDF, Markdow
     ```bash
     streamlit run app.py
     ```
+
+or just use this [link](https://textmerger.streamlit.app/)
