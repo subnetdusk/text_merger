@@ -1,0 +1,8 @@
+streamlit
+pandas
+pypdf
+python-docx
+markdown-it-py
+beautifulsoup4
+lxml
+xhtml2pdf
