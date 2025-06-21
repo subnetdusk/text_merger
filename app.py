@@ -1,52 +1,43 @@
-import streamlit as st
-import pandas as pd # We'll use this later, but it's good to have
+from mergers import merger_logic
 
-st.set_page_config(
-    page_title="File Merger App",
-    page_icon="🔗",
-    layout="centered"
-)
+def determine_output_format(files, force_pdf):
+    if force_pdf:
+        return 'pdf'
+    
+    extensions = {f.name.split('.')[-1].lower() for f in files}
+    
+    if 'pdf' in extensions:
+        return 'pdf'
+    if 'html' in extensions or 'md' in extensions:
+        return 'html'
+    if 'docx' in extensions:
+        return 'html' # Promote to HTML for rich text
+    if 'csv' in extensions:
+        # If only CSV and TXT are present, prefer CSV
+        other_ext = extensions - {'csv', 'txt'}
+        if not other_ext:
+            return 'csv'
+        else: # If other complex types are there, promote to html
+             return 'html'
+    return 'txt'
 
-st.title("🔗 File Merger Application")
-st.write(
-    "Upload your files (TXT, PDF, DOCX, etc.), "
-    "reorder them if needed, and merge them into a single document."
-)
-
-st.header("1. Upload Your Files")
-
-uploaded_files = st.file_uploader(
-    "Choose files to merge",
-    accept_multiple_files=True,
-    # We will specify the file types later
-    # type=['txt', 'pdf', 'docx', 'md', 'html', 'csv']
-)
-
-st.header("2. Set Your Options")
-
-force_pdf_output = st.checkbox(
-    "Force final output as a PDF file",
-    help="If selected, all uploaded files will be converted and merged into a single PDF, regardless of their original format."
-)
-
-st.header("3. Merge & Download")
-
-if uploaded_files:
-    # This is a temporary message. The ability to reorder is a future step.
-    st.info(f"You have uploaded {len(uploaded_files)} files. The merging order will be based on the upload sequence.")
-
-    for file in uploaded_files:
-        st.write(f"- `{file.name}` ({round(file.size / 1024, 2)} KB)")
-
-    if st.button("Merge Files", type="primary"):
-        st.success("Merging logic to be implemented!")
-        if force_pdf_output:
-            st.write("User has requested a PDF output.")
-        else:
-            st.write("The output will follow the standard format promotion logic.")
-
-else:
-    st.warning("Waiting for files to be uploaded...")
-
-st.markdown("---")
-st.write("Made with ❤️ using Streamlit")
+def process_files(files, force_pdf):
+    output_format = determine_output_format(files, force_pdf)
+    
+    filename = f"merged_document.{output_format}"
+    warnings = None
+    
+    if output_format == 'pdf':
+        merged_data = merger_logic.merge_as_pdf(files)
+    elif output_format == 'html':
+        merged_data = merger_logic.merge_as_html(files)
+    elif output_format == 'csv':
+        merged_data, ignored = merger_logic.merge_as_csv(files)
+        if ignored:
+            warnings = f"The following files were ignored to preserve the CSV format: {', '.join(ignored)}"
+        if merged_data is None:
+            return None, "No CSV files found to merge.", None
+    else: # txt
+        merged_data = merger_logic.merge_as_txt(files)
+        
+    return merged_data, filename, warnings
