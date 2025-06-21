@@ -5,6 +5,7 @@ import docx
 from markdown_it import MarkdownIt
 from bs4 import BeautifulSoup
 from xhtml2pdf import pisa
+import html # <-- 1. NUOVA IMPORTAZIONE
 
 def _read_file_content(file):
     encodings_to_try = ['utf-8', 'latin-1', 'windows-1252']
@@ -35,7 +36,7 @@ def merge_as_txt(files):
                 doc = docx.Document(file)
                 for para in doc.paragraphs:
                     content += para.text + "\n"
-            else: # For txt, md, html, csv etc.
+            else:
                 content = _read_file_content(file)
 
             output_string.write(content)
@@ -83,19 +84,25 @@ def _convert_to_html_fragment(file):
         content = _read_file_content(file)
         df = pd.read_csv(io.StringIO(content))
         return df.to_html(index=False)
+    
+    # --- 2. MODIFICA PRINCIPALE QUI ---
     elif file_extension == 'txt':
         content = _read_file_content(file)
-        return f'<pre>{content}</pre>'
+        # Escape special HTML characters and replace newlines with <br>
+        escaped_content = html.escape(content)
+        return f'<div>{escaped_content.replace(chr(10), "<br>")}</div>'
+    # ------------------------------------
+
     elif file_extension == 'docx':
         file.seek(0)
         doc = docx.Document(file)
         content = "\n".join([para.text for para in doc.paragraphs])
-        return f'<div>{"<p>" + content.replace(chr(10), "</p><p>") + "</p>"}</div>'
+        return f'<div>{"<p>" + html.escape(content).replace(chr(10), "</p><p>") + "</p>"}</div>'
     elif file_extension == 'pdf':
         file.seek(0)
         reader = PdfReader(file)
         content = "".join([page.extract_text() for page in reader.pages])
-        return f'<div>{"<p>" + content.replace(chr(10), "</p><p>") + "</p>"}</div>'
+        return f'<div>{"<p>" + html.escape(content).replace(chr(10), "</p><p>") + "</p>"}</div>'
     return ""
 
 def merge_as_html(files):
@@ -120,6 +127,7 @@ def merge_as_html(files):
             th, td {{ border: 1px solid #dddddd; text-align: left; padding: 8px; }}
             th {{ background-color: #f2f2f2; }}
             hr {{ margin: 2em 0; border: 1px solid #ccc; }}
+            /* Lo stile per 'pre' può rimanere, non verrà più usato per i .txt */
             pre {{ background-color: #f5f5f5; padding: 1em; white-space: pre-wrap; word-wrap: break-word; }}
         </style>
     </head>
@@ -143,7 +151,6 @@ def merge_as_pdf(files):
             for page in reader.pages:
                 writer.add_page(page)
         except Exception:
-            # If a PDF is corrupted, we skip it but can convert its text
             other_files.append(pdf_file)
 
     if other_files:
