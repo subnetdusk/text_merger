@@ -2,26 +2,22 @@ import streamlit as st
 from utils import file_handler
 import time
 
-# --- Page Configuration ---
 st.set_page_config(
     page_title="File Merger App",
     page_icon="🔗",
     layout="centered"
 )
 
-# --- Initialize Session State ---
 # This key will be used to reset the file_uploader widget
 if 'uploader_key' not in st.session_state:
     st.session_state.uploader_key = 0
 
-# --- Title and Description ---
 st.title("🔗 File Merger Application")
 st.write(
     "Upload your files (TXT, PDF, DOCX, etc.), "
     "and merge them into a single document."
 )
 
-# --- File Uploader Section ---
 st.header("1. Upload Your Files")
 
 uploaded_files = st.file_uploader(
@@ -39,7 +35,6 @@ force_pdf_output = st.checkbox(
     help="If selected, all uploaded files will be converted and merged into a single PDF."
 )
 
-# --- Summary and Action Section ---
 st.header("3. Merge & Download")
 
 if uploaded_files:
@@ -48,7 +43,6 @@ if uploaded_files:
     for file in uploaded_files:
         st.write(f"- `{file.name}`")
 
-    # --- Action Buttons ---
     col1, col2 = st.columns([1, 1])
 
     with col1:
@@ -82,8 +76,6 @@ if uploaded_files:
                 del st.session_state['merged_data']
             st.rerun()
 
-    # --- Download Button Area ---
-    # Check if merged data exists in session state and show the download button
     if 'merged_data' in st.session_state and st.session_state.merged_data is not None:
         st.download_button(
             label=f"Download {st.session_state.output_filename}",
@@ -96,6 +88,3 @@ if uploaded_files:
 else:
     st.warning("Waiting for files to be uploaded...")
 
-# --- Footer ---
-st.markdown("---")
-st.write("Made with Streamlit")
