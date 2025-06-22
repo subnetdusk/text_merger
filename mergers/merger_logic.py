@@ -5,7 +5,7 @@ import docx
 from markdown_it import MarkdownIt
 from bs4 import BeautifulSoup
 from xhtml2pdf import pisa
-import html # <-- 1. NUOVA IMPORTAZIONE
+import html 
 
 def _read_file_content(file):
     encodings_to_try = ['utf-8', 'latin-1', 'windows-1252']
@@ -85,13 +85,11 @@ def _convert_to_html_fragment(file):
         df = pd.read_csv(io.StringIO(content))
         return df.to_html(index=False)
     
-    # --- 2. MODIFICA PRINCIPALE QUI ---
     elif file_extension == 'txt':
         content = _read_file_content(file)
         # Escape special HTML characters and replace newlines with <br>
         escaped_content = html.escape(content)
         return f'<div>{escaped_content.replace(chr(10), "<br>")}</div>'
-    # ------------------------------------
 
     elif file_extension == 'docx':
         file.seek(0)
